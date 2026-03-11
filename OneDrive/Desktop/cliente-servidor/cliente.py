@@ -1,38 +1,35 @@
 import socket
 import threading
 
-def recibir_mensajes(mi_socket):
+def recibir_mensajes(s):
     while True:
         try:
-            mensaje = mi_socket.recv(1024).decode('utf-8')
-            if not mensaje:
-                break
-            print(f"\n[SERVIDOR DICE]: {mensaje}")
-            print("Tú: ", end="")
+            data = s.recv(1024)
+            if not data: break
+            print(f"\n{data.decode('utf-8')}\nTú: ", end="")
         except:
             break
 
-IP_DESTINO = '192.168.107.95' 
-PORT_DESTINO = 65432
+# Configuración
+IP_UBUNTU = '192.168.107.95' # Tu IP de la VM
+PORT = 65432
 
-cliente = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+nick = input("Ingresa tu nickname para el chat: ")
 
+s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
-    cliente.connect((IP_DESTINO, PORT_DESTINO))
-    print("[+] ¡Conexión exitosa al servidor!")
-except:
-    print("[!] No se pudo conectar. ¿El servidor está prendido?")
-    exit()
-
-hilo_escucha = threading.Thread(target=recibir_mensajes, args=(cliente,))
-hilo_escucha.daemon = True
-hilo_escucha.start()
-
-while True:
-    mi_mensaje = input("Tú: ")
-    cliente.send(mi_mensaje.encode('utf-8'))
+    s.connect((IP_UBUNTU, PORT))
+    # ENVIAMOS EL NICKNAME PRIMERO (Handshake)
+    s.send(nick.encode('utf-8'))
+    print(f"[!] Conectado como {nick}. Escribe 'salir' para abandonar.")
     
-    if mi_mensaje.lower() == 'terminar':
-        break
+    threading.Thread(target=recibir_mensajes, args=(s,), daemon=True).start()
 
-cliente.close()
+    while True:
+        msg = input("Tú: ")
+        if msg.lower() == 'salir': break
+        s.send(msg.encode('utf-8'))
+except Exception as e:
+    print(f"[!] Error de conexión: {e}")
+finally:
+    s.close()

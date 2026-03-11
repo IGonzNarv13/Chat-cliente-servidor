@@ -1,37 +1,58 @@
 import socket
 import threading
 
-def recibir_mensajes(conexion):
-    while True:
-        try:
-            mensaje = conexion.recv(1024).decode('utf-8')
-            if not mensaje:
+# Diccionario para asociar conexiones con nicknames {conexion: nickname}
+clientes = {}
+
+def broadcast(mensaje, conexion_remitente):
+    """Reenvía el mensaje a todos con el nombre del remitente"""
+    nombre = clientes[conexion_remitente]
+    formato_mensaje = f"[{nombre}]: {mensaje.decode('utf-8')}"
+    
+    for cliente in clientes:
+        if cliente != conexion_remitente:
+            try:
+                cliente.send(formato_mensaje.encode('utf-8'))
+            except:
+                remover(cliente)
+
+def manejar_cliente(conn, addr):
+    try:
+        # El primer mensaje que recibimos de este cliente es su Nickname
+        nickname = conn.recv(1024).decode('utf-8')
+        clientes[conn] = nickname
+        print(f"[+] {nickname} ({addr}) se ha unido al chat.")
+        
+        # Avisar a los demás que alguien entró
+        aviso = f"*** {nickname} ha entrado al chat ***".encode('utf-8')
+        for c in clientes:
+            if c != conn: c.send(aviso)
+
+        while True:
+            mensaje = conn.recv(1024)
+            if mensaje:
+                broadcast(mensaje, conn)
+            else:
+                remover(conn)
                 break
-            print(f"\n[CLIENTE DICE]: {mensaje}")
-            print("Tú: ", end="")
-        except:
-            break
-    print("\n[!] Conexión terminada.")
+    except:
+        remover(conn)
+
+def remover(conn):
+    if conn in clientes:
+        nombre = clientes[conn]
+        print(f"[-] {nombre} se ha desconectado.")
+        del clientes[conn]
 
 HOST = '0.0.0.0'
-PORT = 65432 
-
+PORT = 65432
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servidor.bind((HOST, PORT))
-servidor.listen()
+servidor.listen(5) # Capacidad de la sala de espera
 
-print(f"[*] Servidor iniciado en el puerto {PORT}. Esperando al cliente...")
-conexion, direccion = servidor.accept()
-
-print(f"[+] ¡Conectado con {direccion}!")
-
-hilo_escucha = threading.Thread(target=recibir_mensajes, args=(conexion,))
-hilo_escucha.daemon = True
-hilo_escucha.start()
+print(f"[*] Servidor de chat grupal activo en el puerto {PORT}...")
 
 while True:
-    mi_mensaje = input("Tú: ")
-    conexion.send(mi_mensaje.encode('utf-8'))
-    if mi_mensaje.lower() == 'terminar':
-        break
-conexion.close()
+    conn, addr = servidor.accept()
+    hilo = threading.Thread(target=manejar_cliente, args=(conn, addr))
+    hilo.start()
