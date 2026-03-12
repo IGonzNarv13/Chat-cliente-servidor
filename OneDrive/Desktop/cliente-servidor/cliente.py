@@ -10,8 +10,7 @@ def recibir_mensajes(s):
         except:
             break
 
-# Configuración
-IP_UBUNTU = '192.168.107.95' # Tu IP de la VM
+IP_UBUNTU = '192.168.107.95'
 PORT = 65432
 
 nick = input("Ingresa tu nickname para el chat: ")
@@ -19,7 +18,6 @@ nick = input("Ingresa tu nickname para el chat: ")
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 try:
     s.connect((IP_UBUNTU, PORT))
-    # ENVIAMOS EL NICKNAME PRIMERO (Handshake)
     s.send(nick.encode('utf-8'))
     print(f"[!] Conectado como {nick}. Escribe 'salir' para abandonar.")
     

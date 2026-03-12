@@ -1,7 +1,6 @@
 import socket
 import threading
 
-# Diccionario para asociar conexiones con nicknames {conexion: nickname}
 clientes = {}
 
 def broadcast(mensaje, conexion_remitente):
@@ -18,12 +17,10 @@ def broadcast(mensaje, conexion_remitente):
 
 def manejar_cliente(conn, addr):
     try:
-        # El primer mensaje que recibimos de este cliente es su Nickname
         nickname = conn.recv(1024).decode('utf-8')
         clientes[conn] = nickname
         print(f"[+] {nickname} ({addr}) se ha unido al chat.")
         
-        # Avisar a los demás que alguien entró
         aviso = f"*** {nickname} ha entrado al chat ***".encode('utf-8')
         for c in clientes:
             if c != conn: c.send(aviso)
@@ -48,7 +45,7 @@ HOST = '0.0.0.0'
 PORT = 65432
 servidor = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 servidor.bind((HOST, PORT))
-servidor.listen(5) # Capacidad de la sala de espera
+servidor.listen(5)
 
 print(f"[*] Servidor de chat grupal activo en el puerto {PORT}...")
 
