@@ -10,7 +10,7 @@ def recibir_mensajes(s):
         except:
             break
 
-IP_UBUNTU = '192.168.107.95'
+IP_UBUNTU = '192.168.100.44'
 PORT = 65432
 
 nick = input("Ingresa tu nickname para el chat: ")
