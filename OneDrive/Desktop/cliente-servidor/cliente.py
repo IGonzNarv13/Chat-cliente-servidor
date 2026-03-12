@@ -10,24 +10,23 @@ def recibir_mensajes(s):
         except:
             break
 
-IP_UBUNTU = '192.168.100.44'
+IP_SERVIDOR = '192.168.107.95'
 PORT = 65432
 
-nick = input("Ingresa tu nickname para el chat: ")
+nickname = input("Ingresa tu nickname: ")
 
 s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
 try:
-    s.connect((IP_UBUNTU, PORT))
-    s.send(nick.encode('utf-8'))
-    print(f"[!] Conectado como {nick}. Escribe 'salir' para abandonar.")
-    
+    s.connect((IP_SERVIDOR, PORT))
+    s.send(nickname.encode('utf-8'))
+    print(f"Conectado como {nickname}. Escribe 'salir' para finalizar.")
+
     threading.Thread(target=recibir_mensajes, args=(s,), daemon=True).start()
 
     while True:
         msg = input("Tú: ")
         if msg.lower() == 'salir': break
         s.send(msg.encode('utf-8'))
-except Exception as e:
-    print(f"[!] Error de conexión: {e}")
 finally:
     s.close()
